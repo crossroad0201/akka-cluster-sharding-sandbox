@@ -1,11 +1,9 @@
 package crossroad0201.sandbox.akkaclustersharding.pattern_b
 
-import akka.actor.typed.{ ActorSystem, Behavior }
 import akka.actor.typed.scaladsl.Behaviors
-import akka.cluster.sharding.typed.{ ClusterShardingSettings, ShardingEnvelope, ShardingMessageExtractor }
+import akka.actor.typed.{ ActorSystem, Behavior }
 import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, Entity, EntityContext, EntityTypeKey }
-
-import scala.concurrent.duration.FiniteDuration
+import akka.cluster.sharding.typed.{ ClusterShardingSettings, ShardingEnvelope, ShardingMessageExtractor }
 
 object ShardedTotoActor {
   import TodoActor.Protocol._
@@ -16,37 +14,26 @@ object ShardedTotoActor {
     system: ActorSystem[_],
     clusterSharding: ClusterSharding,
     commandBehavior: Behavior[Command],
-    commandActorName: String,
-    receiveTimeout: Option[FiniteDuration]
+    commandActorName: String
   ): Unit = {
     val numberOfShards = {
       val settings = ClusterShardingSettings(system)
       settings.numberOfShards
     }
-    val entity = Entity(TypeKey)(behavior(commandBehavior, commandActorName, receiveTimeout))
+    val entity = Entity(TypeKey)(behavior(commandBehavior, commandActorName))
       .withMessageExtractor(new MessageExtractor(numberOfShards))
-      .withStopMessage(Stop)
     clusterSharding.init(entity)
   }
 
   private def behavior(
     commandBehavior: Behavior[Command],
-    commandActorName: String,
-    receiveTimeout: Option[FiniteDuration]
+    commandActorName: String
   ): EntityContext[Command] => Behavior[Command] = { entityContext =>
     Behaviors.setup[Command] { ctx =>
-      receiveTimeout.foreach(ctx.setReceiveTimeout(_, Idle))
-
-      Behaviors.receiveMessagePartial {
-        case Idle =>
-          entityContext.shard ! ClusterSharding.Passivate(ctx.self)
-          Behaviors.same
-        case Stop =>
-          Behaviors.stopped
-        case command =>
-          val actorRef = ctx.spawn(commandBehavior, commandActorName)
-          actorRef ! command
-          Behaviors.same
+      Behaviors.receiveMessage { command =>
+        val actorRef = ctx.spawn(commandBehavior, commandActorName)
+        actorRef ! command
+        Behaviors.same
       }
     }
   }

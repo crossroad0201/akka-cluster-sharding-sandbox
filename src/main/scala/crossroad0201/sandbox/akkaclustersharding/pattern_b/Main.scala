@@ -36,8 +36,7 @@ object Main extends App {
             entityId => TodoActor(entityId),
             entityId => entityId
             ),
-          "todoBroker",
-          None
+          "todoBroker"
         )
         ctx.spawn(ShardedTotoActor.ofProxy(clusterSharding), "todoProxy")
       }

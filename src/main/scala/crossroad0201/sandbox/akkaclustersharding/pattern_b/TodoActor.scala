@@ -30,13 +30,6 @@ object TodoActor {
     case class GetTodoSucceeded(todo: Todo) extends GetTodoReply
 
     object EntityNotFound extends CloseTotoReply with GetTodoReply
-
-    sealed trait InternalCommand extends Command {
-      override def entityId: EntityId = throw new UnsupportedOperationException()
-    }
-
-    case object Idle extends InternalCommand
-    case object Stop extends InternalCommand
   }
 
   private sealed trait Event
