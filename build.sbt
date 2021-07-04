@@ -29,6 +29,10 @@ lazy val root = (project in file("."))
       "org.scalatest" %% "scalatest" % "3.1.0" % Test
     ),
 
+    // TODO アプリケーションの切り替えを、実行時にできるようにする
+    Compile / mainClass := Some("crossroad0201.sandbox.akkaclustersharding.pattern_a.Main"),
+//    Compile / mainClass := Some("crossroad0201.sandbox.akkaclustersharding.pattern_b.Main"),
+
     Docker / packageName := s"crossroad0201/akka-cluster-sharding-sandbox",
     dockerBaseImage := "adoptopenjdk/openjdk8",
     dockerUpdateLatest := true

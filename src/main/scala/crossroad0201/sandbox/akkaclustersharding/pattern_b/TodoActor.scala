@@ -1,31 +1,42 @@
-package crossroad0201.sandbox.akkaclustersharding.persistence
+package crossroad0201.sandbox.akkaclustersharding.pattern_b
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ ActorRef, Behavior }
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior }
+import crossroad0201.sandbox.akkaclustersharding.EntityId
 
 object TodoActor {
 
   object Protocol {
-    sealed trait Command
+    sealed trait Command {
+      def entityId: EntityId
+    }
 
     case class CreateTodo(
+      entityId: EntityId,
       subject: String,
       replyTo: ActorRef[CreateTodoReply]) extends Command
     sealed trait CreateTodoReply
     case object CreateTodoSucceeded extends CreateTodoReply
     case object CreateTodoFailedByAlreadyCreated extends CreateTodoReply
 
-    case class CloseTodo(replyTo: ActorRef[CloseTotoReply]) extends Command
+    case class CloseTodo(entityId: EntityId, replyTo: ActorRef[CloseTotoReply]) extends Command
     sealed trait CloseTotoReply
     case object CloseTodoSucceeded extends CloseTotoReply
 
-    case class GetTodo(replyTo: ActorRef[GetTodoReply]) extends Command
+    case class GetTodo(entityId: EntityId, replyTo: ActorRef[GetTodoReply]) extends Command
     sealed trait GetTodoReply
     case class GetTodoSucceeded(todo: Todo) extends GetTodoReply
 
     object EntityNotFound extends CloseTotoReply with GetTodoReply
+
+    sealed trait InternalCommand extends Command {
+      override def entityId: EntityId = throw new UnsupportedOperationException()
+    }
+
+    case object Idle extends InternalCommand
+    case object Stop extends InternalCommand
   }
 
   private sealed trait Event
@@ -34,12 +45,12 @@ object TodoActor {
 
 
   private sealed trait State
-  private case class Empty(entityId: String) extends State
+  private case class Empty(entityId: EntityId) extends State
   private case class Just(entity: Todo) extends State
 
   import Protocol._
 
-  def apply(entityId: String): Behavior[Command] =
+  def apply(entityId: EntityId): Behavior[Command] =
     Behaviors.setup[Command] { _ =>
       EventSourcedBehavior[Command, Event, State](
         PersistenceId.of("Todo", entityId),
@@ -50,15 +61,16 @@ object TodoActor {
     }
 
   private val commandHandler: (State, Command) => Effect[Event, State] = {
-    case (Empty(entityId), CreateTodo(subject, replyTo)) => createTodo(entityId, subject, replyTo)
-    case (Empty(_), CloseTodo(replyTo)) => todoNotFound(replyTo)
-    case (Empty(_), GetTodo(replyTo)) => todoNotFound(replyTo)
-    case (Just(_), CreateTodo(_, replyTo)) => todoAlreadyCreated(replyTo)
-    case (Just(todo), CloseTodo(replyTo)) => closeTodo(todo, replyTo)
-    case (Just(todo), GetTodo(replyTo)) => returnTodo(todo, replyTo)
+    case (Empty(myEntityId), CreateTodo(entityId, subject, replyTo)) if myEntityId == entityId => createTodo(entityId, subject, replyTo)
+    case (Empty(myEntityId), CloseTodo(entityId, replyTo)) if myEntityId == entityId => todoNotFound(replyTo)
+    case (Empty(myEntityId), GetTodo(entityId, replyTo)) if myEntityId == entityId => todoNotFound(replyTo)
+    case (Just(todo), CreateTodo(entityId, _, replyTo)) if todo.id == entityId => todoAlreadyCreated(replyTo)
+    case (Just(todo), CloseTodo(entityId, replyTo)) if todo.id == entityId => closeTodo(todo, replyTo)
+    case (Just(todo), GetTodo(entityId, replyTo)) if todo.id == entityId => returnTodo(todo, replyTo)
+    case _ => Effect.unhandled
   }
 
-  private def createTodo(entityId: String, subject: String, replyTo: ActorRef[CreateTodoSucceeded.type]): Effect[Event, State] =
+  private def createTodo(entityId: EntityId, subject: String, replyTo: ActorRef[CreateTodoSucceeded.type]): Effect[Event, State] =
     Effect.persist(
       TodoCreated(subject)
     ).thenReply(replyTo) { _ =>
@@ -99,11 +111,11 @@ object TodoActor {
 
 }
 
-case class Todo(id: String, subject: String, open: Boolean) {
+case class Todo(id: EntityId, subject: String, open: Boolean) {
   def close(): Todo = copy(open = false)
 }
 
 object Todo {
-  def create(id: String, subject: String): Todo = Todo(id, subject, open = true)
+  def create(id: EntityId, subject: String): Todo = Todo(id, subject, open = true)
 }
 

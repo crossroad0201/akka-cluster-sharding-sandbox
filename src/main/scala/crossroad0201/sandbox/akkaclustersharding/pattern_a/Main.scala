@@ -1,4 +1,4 @@
-package crossroad0201.sandbox.akkaclustersharding
+package crossroad0201.sandbox.akkaclustersharding.pattern_a
 
 import java.util.UUID
 
@@ -11,13 +11,14 @@ import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import akka.util.Timeout
 import com.typesafe.config.{ Config, ConfigFactory, ConfigRenderOptions }
-import crossroad0201.sandbox.akkaclustersharding.persistence.TodoActor
+import crossroad0201.sandbox.akkaclustersharding.EntityId
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.duration._
 import scala.concurrent.{ Await, ExecutionContext }
 
 object Main extends App {
+  import scala.concurrent.duration._
+
   private final val logger = LoggerFactory.getLogger(getClass)
 
   val config: Config = ConfigFactory.load()
@@ -48,11 +49,12 @@ object Main extends App {
   implicit val askTimeout: Timeout = Timeout(30.seconds)
   implicit val scheduler: Scheduler = actorSystem.scheduler
   implicit val ec: ExecutionContext = actorSystem.executionContext
-  import akka.actor.typed.scaladsl.AskPattern._
 
-  def generateRandomEntityId(): String = UUID.randomUUID().toString.replaceAll("-", "").reverse
+  def generateRandomEntityId(): EntityId = UUID.randomUUID().toString.replaceAll("-", "")
 
   {
+    import akka.actor.typed.scaladsl.AskPattern._
+
     logger.info("Creating a Todo via Shard region...")
     val entityId = generateRandomEntityId()
     Await.ready(
