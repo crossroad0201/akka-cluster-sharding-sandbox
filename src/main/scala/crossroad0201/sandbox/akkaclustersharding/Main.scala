@@ -1,6 +1,5 @@
 package crossroad0201.sandbox.akkaclustersharding
 
-import java.net.InetAddress
 import java.util.UUID
 
 import akka.Done
@@ -15,8 +14,8 @@ import com.typesafe.config.{ Config, ConfigFactory, ConfigRenderOptions }
 import crossroad0201.sandbox.akkaclustersharding.persistence.TodoActor
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.{ Await, ExecutionContext }
 import scala.concurrent.duration._
+import scala.concurrent.{ Await, ExecutionContext }
 
 object Main extends App {
   private final val logger = LoggerFactory.getLogger(getClass)

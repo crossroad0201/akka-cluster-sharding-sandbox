@@ -12,6 +12,7 @@ services:
       - 8558:8558
     networks:
       default:
+        ipv4_address: 172.30.0.2
         aliases:
           # MEMO application.conf の akka.management.cluster.bootstrap.contact-point-discovery.service-name と合わせておく必要があることに注意
           - AkkaClusterShardingSandbox
@@ -28,6 +29,7 @@ services:
       - 8559:8558
     networks:
       default:
+        ipv4_address: 172.30.0.3
         aliases:
           # MEMO application.conf の akka.management.cluster.bootstrap.contact-point-discovery.service-name と合わせておく必要があることに注意
           - AkkaClusterShardingSandbox
@@ -44,6 +46,7 @@ services:
       - 8560:8558
     networks:
       default:
+        ipv4_address: 172.30.0.4
         aliases:
           # MEMO application.conf の akka.management.cluster.bootstrap.contact-point-discovery.service-name と合わせておく必要があることに注意
           - AkkaClusterShardingSandbox
@@ -53,3 +56,5 @@ networks:
     driver: bridge
     ipam:
       driver: default
+      config:
+        - subnet: 172.30.0.0/24
