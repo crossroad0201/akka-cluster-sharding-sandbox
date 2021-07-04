@@ -1,0 +1,55 @@
+version: '3.6'
+services:
+  akka-cluster-sharding-sandbox-node1:
+    image: crossroad0201/akka-cluster-sharding-sandbox:latest
+#    #environment:
+#      AKKA_REMOTE_ARTERY_CANONICAL_HOSTNAME: localhost.alias1
+#      AKKA_REMOTE_ARTERY_CANONICAL_PORT: 2551
+#      AKKA_MANAGEMENT_HTTP_HOSTNAME: localhost.alias1
+#      AKKA_MANAGEMENT_HTTP_PORT: 8558
+    ports:
+#      - 18080:8080
+      - 8558:8558
+    networks:
+      default:
+        aliases:
+          # MEMO application.conf の akka.management.cluster.bootstrap.contact-point-discovery.service-name と合わせておく必要があることに注意
+          - AkkaClusterShardingSandbox
+
+  akka-cluster-sharding-sandbox-node2:
+    image: crossroad0201/akka-cluster-sharding-sandbox:latest
+#    environment:
+#      AKKA_REMOTE_ARTERY_CANONICAL_HOSTNAME: localhost.alias2
+#      AKKA_REMOTE_ARTERY_CANONICAL_PORT: 2552
+#      AKKA_MANAGEMENT_HTTP_HOSTNAME: localhost.alias2
+#      AKKA_MANAGEMENT_HTTP_PORT: 8559
+    ports:
+#      - 18081:8080
+      - 8559:8558
+    networks:
+      default:
+        aliases:
+          # MEMO application.conf の akka.management.cluster.bootstrap.contact-point-discovery.service-name と合わせておく必要があることに注意
+          - AkkaClusterShardingSandbox
+
+  akka-cluster-sharding-sandbox-node3:
+    image: crossroad0201/akka-cluster-sharding-sandbox:latest
+#    environment:
+#      AKKA_REMOTE_ARTERY_CANONICAL_HOSTNAME: localhost.alias3
+#      AKKA_REMOTE_ARTERY_CANONICAL_PORT: 2553
+#      AKKA_MANAGEMENT_HTTP_HOSTNAME: localhost.alias3
+#      AKKA_MANAGEMENT_HTTP_PORT: 8560
+    ports:
+#      - 18082:8080
+      - 8560:8558
+    networks:
+      default:
+        aliases:
+          # MEMO application.conf の akka.management.cluster.bootstrap.contact-point-discovery.service-name と合わせておく必要があることに注意
+          - AkkaClusterShardingSandbox
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
